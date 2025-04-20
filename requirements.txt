@@ -21,3 +21,10 @@ Pillow
 matplotlib
 requests
 streamlit
+torch
+opencv-python
+numpy
+PyYAML
+pandas
+seaborn
+setuptools
