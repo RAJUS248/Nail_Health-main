@@ -1,13 +1,18 @@
+# Core dependencies
 streamlit
 numpy
 opencv-python-headless
-PyYAML
 pandas
+PyYAML
 seaborn
 setuptools
-torch>=1.7.0
-torchvision>=0.8.1
-Pillow
 wget
+Pillow
 requests
-ultralytics==8.0.20  # or the latest stable version
+
+# Torch & Vision
+torch>=1.10
+torchvision>=0.11
+
+# Ultralytics (for YOLO model support)
+ultralytics==8.0.20
