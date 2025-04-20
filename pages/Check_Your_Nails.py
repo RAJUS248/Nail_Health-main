@@ -310,13 +310,20 @@ import torch
 from datetime import datetime
 import os
 import requests
+import sys
 
 # ========== CONFIG ==========
+
+# Your trained model from Google Drive
 GOOGLE_DRIVE_FILE_ID = '14h3USnlg9sbDtowqFFo6m_XG4y0nRY4z'  # <-- Replace with your actual file ID
 MODEL_PATH = 'yolo_nail200.pt'
 DEVICE_OPTION = 'cpu'
 
+# Add local yolov5 directory to path
+sys.path.append('yolov5')  # ✅ assumes yolov5 folder is in the same dir as this file
+
 # ========== PAGE SETUP ==========
+
 st.set_page_config(page_title="YOLO Nail Detection", layout='wide', page_icon='./images/nail.png')
 st.header('Get Object Detection for Nail Image')
 
@@ -332,10 +339,12 @@ with col3:
 st.warning("This detection is not medical advice. For health concerns, consult a doctor.")
 
 # ========== CREATE FOLDERS ==========
+
 os.makedirs('data/uploads', exist_ok=True)
 os.makedirs('data/outputs', exist_ok=True)
 
-# ========== DOWNLOAD MODEL ==========
+# ========== DOWNLOAD MODEL IF NOT PRESENT ==========
+
 def download_from_gdrive(file_id, dest_path):
     URL = "https://drive.google.com/uc?export=download"
     session = requests.Session()
@@ -358,7 +367,8 @@ def download_from_gdrive(file_id, dest_path):
             if chunk:
                 f.write(chunk)
 
-# ========== LOAD YOLO MODEL ==========
+# ========== LOAD YOLOv5 MODEL FROM LOCAL ==========
+
 @st.cache_resource
 def load_model():
     if not os.path.exists(MODEL_PATH):
@@ -367,10 +377,11 @@ def load_model():
             st.success('Model downloaded successfully.')
 
     with st.spinner('Loading model...'):
-        model = torch.hub.load('ultralytics/yolov5', 'custom', path=MODEL_PATH, force_reload=True, device=DEVICE_OPTION)
+        model = torch.hub.load('yolov5', 'custom', path=MODEL_PATH, source='local', force_reload=True, device=DEVICE_OPTION)
     return model
 
 # ========== IMAGE UPLOAD ==========
+
 def upload_image():
     image_file = st.file_uploader("Upload an image to get detection", type=['png', 'jpg', 'jpeg'])
     if image_file:
@@ -383,6 +394,7 @@ def upload_image():
     return None
 
 # ========== MAIN ==========
+
 def main():
     model = load_model()
     image_data = upload_image()
@@ -409,17 +421,17 @@ def main():
                 "Size": image_data['size']
             })
 
-            if st.button("Run YOLO Detection"):
-                with st.spinner("Detecting..."):
-                    pred = model(upload_path)
-                    pred.render()
+        if st.button("Run YOLO Detection"):
+            with st.spinner("Detecting..."):
+                pred = model(upload_path)
+                pred.render()  # modifies pred.ims with boxes drawn
 
-                    for im in pred.ims:
-                        im_output = Image.fromarray(im)
-                        im_output.save(output_path)
+                for im in pred.ims:
+                    im_output = Image.fromarray(im)
+                    im_output.save(output_path)
 
-                st.success("Detection complete!")
-                st.image(Image.open(output_path), caption="Prediction", width=500)
+            st.success("Detection complete!")
+            st.image(Image.open(output_path), caption="Prediction", width=500)
 
 if __name__ == "__main__":
     main()
