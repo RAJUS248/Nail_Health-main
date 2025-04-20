@@ -306,26 +306,21 @@
 
 import streamlit as st
 from PIL import Image
-import numpy as np
 import torch
 from datetime import datetime
 import os
-import wget
+import requests
 
-# CONFIG
-MODEL_URL = "https://your-download-link.com/yolo_nail200.pt"  # TODO: Replace this with real URL
-MODEL_PATH = "yolo_nail200.pt"
-DEVICE_OPTION = "cpu"
+# ========== CONFIG ==========
+GOOGLE_DRIVE_FILE_ID = '14h3USnlg9sbDtowqFFo6m_XG4y0nRY4z'  # <-- Replace with your model's file ID
+MODEL_PATH = 'yolo_nail200.pt'
+DEVICE_OPTION = 'cpu'
 
-# Streamlit page setup
-st.set_page_config(page_title="YOLO Object Detection",
-                   layout='wide',
-                   page_icon='./images/nail.png')
-
+# ========== PAGE SETUP ==========
+st.set_page_config(page_title="YOLO Nail Detection", layout='wide', page_icon='./images/nail.png')
 st.header('Get Object Detection for Nail Image')
-st.text("Please refer the sample images below for taking a photo (only raw unmanicured nails):")
 
-# Show example images
+st.text("Please refer the sample images below for taking a photo (only raw unmanicured nails):")
 col1, col2, col3 = st.columns(3)
 with col1:
     st.image('./images/VALIDPITCURE/pic3.jpg', width=200)
@@ -334,83 +329,101 @@ with col2:
 with col3:
     st.image('./images/VALIDPITCURE/pic2.jpg', width=200)
 
-st.warning("Please note that this detection is not a medical advice. For any further medical help please consult your doctor.")
+st.warning("This detection is not medical advice. For health concerns, consult a doctor.")
 
-# Ensure folders exist
+# ========== CREATE FOLDERS ==========
 os.makedirs('data/uploads', exist_ok=True)
 os.makedirs('data/outputs', exist_ok=True)
 
+# ========== DOWNLOAD MODEL ==========
+def download_from_gdrive(file_id, dest_path):
+    URL = "https://drive.google.com/uc?export=download"
+
+    session = requests.Session()
+    response = session.get(URL, params={'id': file_id}, stream=True)
+
+    def get_confirm_token(response):
+        for key, value in response.cookies.items():
+            if key.startswith('download_warning'):
+                return value
+        return None
+
+    token = get_confirm_token(response)
+    if token:
+        params = {'id': file_id, 'confirm': token}
+        response = session.get(URL, params=params, stream=True)
+
+    CHUNK_SIZE = 32768
+    with open(dest_path, "wb") as f:
+        for chunk in response.iter_content(CHUNK_SIZE):
+            if chunk:
+                f.write(chunk)
+
 @st.cache_resource
 def load_model():
-    # Download model if missing
     if not os.path.exists(MODEL_PATH):
-        with st.spinner('Downloading model...'):
-            wget.download(MODEL_URL, MODEL_PATH)
+        with st.spinner('Downloading YOLO model...'):
+            download_from_gdrive(GOOGLE_DRIVE_FILE_ID, MODEL_PATH)
             st.success('Model downloaded successfully.')
-    
+
     with st.spinner('Loading model...'):
         model = torch.hub.load('ultralytics/yolov5', 'custom', path=MODEL_PATH, force_reload=True, device=DEVICE_OPTION)
     return model
 
+# ========== IMAGE UPLOAD ==========
 def upload_image():
-    image_file = st.file_uploader(label='Please Upload Image to get detections')
-    if image_file is not None:
-        size_mb = image_file.size / (1024 ** 2)
-        file_details = {
-            "filename": image_file.name,
-            "filetype": image_file.type,
-            "filesize": f"{size_mb:.2f} MB"
-        }
-
-        if file_details['filetype'] in ('image/png', 'image/jpeg'):
-            st.success('VALID IMAGE file type (png or jpeg)')
-            return {"file": image_file, "details": file_details}
+    image_file = st.file_uploader("Upload an image to get detection")
+    if image_file:
+        filetype = image_file.type
+        if filetype in ('image/jpeg', 'image/png'):
+            return {
+                'file': image_file,
+                'name': image_file.name,
+                'type': filetype,
+                'size': f"{image_file.size / (1024**2):.2f} MB"
+            }
         else:
-            st.error('INVALID Image file type. Upload only png, jpg, jpeg.')
-            return None
+            st.error("Only PNG or JPEG images are supported.")
     return None
 
+# ========== MAIN ==========
 def main():
     model = load_model()
-    uploaded = upload_image()
+    image_data = upload_image()
 
-    if uploaded:
-        prediction = False
-        image_obj = Image.open(uploaded['file'])
-        img_details = uploaded['details']
+    if image_data:
+        image = Image.open(image_data['file'])
+        timestamp = datetime.now().timestamp()
+        filename = f"{int(timestamp)}_{image_data['name']}"
+
+        upload_path = f"data/uploads/{filename}"
+        output_path = f"data/outputs/{filename}"
+
+        # Save original image
+        image.save(upload_path)
+        st.success("Image uploaded successfully.")
 
         col1, col2 = st.columns(2)
         with col1:
-            st.info('Preview of Image')
-            st.image(image_obj, width=300)
-
-        ts = datetime.timestamp(datetime.now())
-        imgpath = os.path.join('data/uploads', f"{ts}_{img_details['filename']}")
-        outputpath = os.path.join('data/outputs', os.path.basename(imgpath))
-
-        # Save uploaded image
-        with open(imgpath, "wb") as f:
-            image_obj.save(f)
-            st.success("Image saved successfully")
-
+            st.image(image, caption="Uploaded Image", width=300)
         with col2:
-            st.subheader('Uploaded Image Info')
-            st.json(img_details)
-            button = st.button('Get Detection from YOLO')
+            st.json({
+                "Filename": image_data['name'],
+                "Type": image_data['type'],
+                "Size": image_data['size']
+            })
 
-            if button:
-                with st.spinner("Getting Objects from image..."):
-                    pred = model(imgpath)
+            if st.button("Run YOLO Detection"):
+                with st.spinner("Detecting..."):
+                    pred = model(upload_path)
                     pred.render()
 
                     for im in pred.ims:
-                        im_out = Image.fromarray(im)
-                        im_out.save(outputpath)
-                    prediction = True
+                        im_output = Image.fromarray(im)
+                        im_output.save(output_path)
 
-        if prediction:
-            st.image(Image.open(outputpath), caption='Model Prediction(s)', width=500)
-            st.text(pred)
+                st.success("Detection complete!")
+                st.image(Image.open(output_path), caption="Prediction", width=500)
 
 if __name__ == "__main__":
     main()
