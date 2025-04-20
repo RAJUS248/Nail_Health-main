@@ -11,17 +11,17 @@ with col1:
 # Column 2 - Prajwal M
 with col2:
     st.markdown("### Prajwal M")
-    st.image(r'C:\Users\Raju\OneDrive\Desktop\Nail_Health-main\images\team\Prajwal.jpg')
+    st.image(r'images/team/Prajwal.jpg')
     col2.markdown("###### GitHub : [Github](https://github.com/Prajwal590)")
 
 # Column 3 - Raju S B
 with col3:
     st.markdown("### Raju S B")
-    st.image(r'C:\Users\Raju\OneDrive\Desktop\Nail_Health-main\images\team\Raju S B.jpg')
+    st.image(r'images/team/Raju S B.jpg')
     col3.markdown("###### GitHub : [Github](https://github.com/RAJUS248)")
 
 # Column 4 - Kartik G
 with col4:
     st.markdown("### Kartik G")
-    st.image(r'C:\Users\Raju\OneDrive\Desktop\Nail_Health-main\images\team\Kartik G.jpg')
+    st.image(r'images/team/Kartik G.jpg')
     col4.markdown("###### GitHub : [Github](https://github.com/Kartik-Galgali)")
