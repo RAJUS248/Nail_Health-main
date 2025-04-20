@@ -10,3 +10,14 @@ tqdm>=4.64.0
 pandas>=1.1.4
 seaborn>=0.11.0
 setuptools>=65.5.1
+torch>=1.7
+torchvision
+opencv-python
+numpy
+PyYAML
+pandas
+seaborn
+Pillow
+matplotlib
+requests
+streamlit
