@@ -10,3 +10,4 @@ torchvision>=0.8.1
 Pillow>=7.1.2
 wget
 requests
+ultralytics==8.0.20  # or latest compatible version
