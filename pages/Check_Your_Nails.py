@@ -312,7 +312,7 @@ import os
 import requests
 
 # ========== CONFIG ==========
-GOOGLE_DRIVE_FILE_ID = '14h3USnlg9sbDtowqFFo6m_XG4y0nRY4z'  # <-- Replace with your model's file ID
+GOOGLE_DRIVE_FILE_ID = '14h3USnlg9sbDtowqFFo6m_XG4y0nRY4z'  # <-- Replace with your actual file ID
 MODEL_PATH = 'yolo_nail200.pt'
 DEVICE_OPTION = 'cpu'
 
@@ -338,7 +338,6 @@ os.makedirs('data/outputs', exist_ok=True)
 # ========== DOWNLOAD MODEL ==========
 def download_from_gdrive(file_id, dest_path):
     URL = "https://drive.google.com/uc?export=download"
-
     session = requests.Session()
     response = session.get(URL, params={'id': file_id}, stream=True)
 
@@ -359,6 +358,7 @@ def download_from_gdrive(file_id, dest_path):
             if chunk:
                 f.write(chunk)
 
+# ========== LOAD YOLO MODEL ==========
 @st.cache_resource
 def load_model():
     if not os.path.exists(MODEL_PATH):
@@ -372,18 +372,14 @@ def load_model():
 
 # ========== IMAGE UPLOAD ==========
 def upload_image():
-    image_file = st.file_uploader("Upload an image to get detection")
+    image_file = st.file_uploader("Upload an image to get detection", type=['png', 'jpg', 'jpeg'])
     if image_file:
-        filetype = image_file.type
-        if filetype in ('image/jpeg', 'image/png'):
-            return {
-                'file': image_file,
-                'name': image_file.name,
-                'type': filetype,
-                'size': f"{image_file.size / (1024**2):.2f} MB"
-            }
-        else:
-            st.error("Only PNG or JPEG images are supported.")
+        return {
+            'file': image_file,
+            'name': image_file.name,
+            'type': image_file.type,
+            'size': f"{image_file.size / (1024**2):.2f} MB"
+        }
     return None
 
 # ========== MAIN ==========
@@ -392,7 +388,7 @@ def main():
     image_data = upload_image()
 
     if image_data:
-        image = Image.open(image_data['file'])
+        image = Image.open(image_data['file']).convert('RGB')
         timestamp = datetime.now().timestamp()
         filename = f"{int(timestamp)}_{image_data['name']}"
 
