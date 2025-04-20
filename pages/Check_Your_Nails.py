@@ -323,11 +323,11 @@ st.header('Get Object Detection for Nail Image')
 st.text("Please refer the sample images below for taking a photo (only raw unmanicured nails):")
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.image('./images/VALIDPITCURE/pic3.jpg', width=200)
+    st.image('images/VALIDPITCURE/pic3.jpg', width=200)
 with col2:
-    st.image('./images/VALIDPITCURE/pic1.jpg', width=200)
+    st.image('images/VALIDPITCURE/pic1.jpg', width=200)
 with col3:
-    st.image('./images/VALIDPITCURE/pic2.jpg', width=200)
+    st.image('images/VALIDPITCURE/pic2.jpg', width=200)
 
 st.warning("This detection is not medical advice. For health concerns, consult a doctor.")
 
