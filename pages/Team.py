@@ -5,7 +5,7 @@ col1, col2, col3,col4= st.columns(4)
 # Column 1 - Priyanka M
 with col1:
     st.markdown("### Priyanka M")
-    st.image(r'C:\Users\Raju\OneDrive\Desktop\Nail_Health-main\images\team\Priyanka M.jpg')
+    st.image(r'images/team/Priyanka M.jpg')
     col1.markdown("###### GitHub : [Github](https://github.com/Priyankagithub2004)")
 
 # Column 2 - Prajwal M
